@@ -61,7 +61,7 @@ def paraphrase():
         if not client:
             return jsonify({"error": "GROQ_API_KEY not configured"}), 500
 
-        data = request.get_json(force=True) or {}
+        data = request.get_json(force=True, silent=True) or {}
         text = data.get("text", "").strip()
         if not text:
             return jsonify({"error": "No text provided"}), 400
