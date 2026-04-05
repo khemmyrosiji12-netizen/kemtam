@@ -50,7 +50,7 @@ def paraphrase():
             },
         }
 
-        response = requests.post(HF_API_URL, headers=headers, json=payload, timeout=25)
+        response = requests.post(HF_API_URL, headers=headers, json=payload, timeout=60)
         response.raise_for_status()
 
         api_response = response.json()
