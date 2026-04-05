@@ -1,6 +1,7 @@
 import os
 import logging
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from groq import Groq
 from dotenv import load_dotenv
 
@@ -10,6 +11,15 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+
+CORS(app, origins=[
+    "http://127.0.0.1:5500",
+    "http://localhost:3000",
+    "http://localhost:8080",
+    "https://humanize-ai-frontend.vercel.app",
+    "https://humanize-ai-one.vercel.app",
+    "https://humanize-ai-server.vercel.app",
+])
 
 _groq_client = None
 
