@@ -56,16 +56,16 @@ def debug():
 
 @app.route("/paraphrase", methods=["POST"])
 def paraphrase():
-    client = get_groq_client()
-    if not client:
-        return jsonify({"error": "GROQ_API_KEY not configured"}), 500
-
-    data = request.get_json(force=True) or {}
-    text = data.get("text", "").strip()
-    if not text:
-        return jsonify({"error": "No text provided"}), 400
-
     try:
+        client = get_groq_client()
+        if not client:
+            return jsonify({"error": "GROQ_API_KEY not configured"}), 500
+
+        data = request.get_json(force=True) or {}
+        text = data.get("text", "").strip()
+        if not text:
+            return jsonify({"error": "No text provided"}), 400
+
         chat_completion = client.chat.completions.create(
             messages=[
                 {
@@ -97,7 +97,7 @@ def paraphrase():
 
     except Exception as e:
         logger.error(f"Error in /paraphrase: {str(e)}")
-        return jsonify({"error": "An internal error occurred. Please try again."}), 500
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
