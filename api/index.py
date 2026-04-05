@@ -43,6 +43,17 @@ def hello():
     return "Hello, deployment works!"
 
 
+@app.route("/debug")
+def debug():
+    import sys
+    key = os.getenv("GROQ_API_KEY", "NOT SET")
+    return jsonify({
+        "python": sys.version,
+        "key_set": key != "NOT SET",
+        "key_length": len(key.strip()),
+    })
+
+
 @app.route("/paraphrase", methods=["POST"])
 def paraphrase():
     client = get_groq_client()
