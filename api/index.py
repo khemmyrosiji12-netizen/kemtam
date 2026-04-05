@@ -1,7 +1,7 @@
 import os
 import logging
 from flask import Flask, request, jsonify
-from groq import Groq
+import requests
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -9,18 +9,9 @@ load_dotenv()
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+HF_API_URL = "https://api-inference.huggingface.co/models/humarin/chatgpt_paraphraser_on_T5_base"
+
 app = Flask(__name__)
-
-_groq_client = None
-
-
-def get_groq_client():
-    global _groq_client
-    if _groq_client is None:
-        groq_api_key = os.getenv("GROQ_API_KEY")
-        if groq_api_key:
-            _groq_client = Groq(api_key=groq_api_key)
-    return _groq_client
 
 
 @app.route("/")
@@ -35,9 +26,9 @@ def hello():
 
 @app.route("/paraphrase", methods=["POST"])
 def paraphrase():
-    client = get_groq_client()
-    if not client:
-        return jsonify({"error": "GROQ_API_KEY not configured"}), 500
+    hf_token = os.getenv("HF_TOKEN")
+    if not hf_token:
+        return jsonify({"error": "HF_TOKEN not configured"}), 500
 
     data = request.get_json(force=True) or {}
     text = data.get("text", "").strip()
@@ -45,34 +36,36 @@ def paraphrase():
         return jsonify({"error": "No text provided"}), 400
 
     try:
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a text rewriting assistant. "
-                        "Rewrite the user's text to sound natural and human-written. "
-                        "Preserve the original meaning exactly. "
-                        "Do not add commentary, disclaimers, or explain what you did. "
-                        "Return only the rewritten text."
-                    ),
-                },
-                {
-                    "role": "user",
-                    "content": text,
-                },
-            ],
-            model="llama-3.3-70b-versatile",
-            temperature=0.8,
-            max_tokens=1024,
-        )
+        headers = {
+            "Authorization": f"Bearer {hf_token}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "inputs": text,
+            "parameters": {
+                "max_length": 512,
+                "num_beams": 10,
+                "do_sample": True,
+                "top_k": 50,
+            },
+        }
 
-        result = chat_completion.choices[0].message.content.strip()
+        response = requests.post(HF_API_URL, headers=headers, json=payload, timeout=25)
+        response.raise_for_status()
 
-        if result:
-            return jsonify({"paraphrased": result, "success": True})
+        api_response = response.json()
+        logger.debug(f"Hugging Face API response: {api_response}")
 
-        return jsonify({"error": "Empty response from model"}), 500
+        generated_text = api_response[0].get("generated_text", "").replace("paraphrase:", "").strip()
+
+        if generated_text:
+            return jsonify({"paraphrased": generated_text, "success": True})
+
+        return jsonify({"error": "Unexpected response format", "response": api_response}), 500
+
+    except requests.exceptions.Timeout:
+        logger.error("Hugging Face API timed out")
+        return jsonify({"error": "Hugging Face API request timed out"}), 500
 
     except Exception as e:
         logger.error(f"Error in /paraphrase: {str(e)}")

@@ -1,6 +1,6 @@
 # kemtam — Humanize AI Server
 
-A Flask paraphrase server that rewrites text to sound human-written. Powered by Groq (llama-3.3-70b-versatile). Deployed on Vercel.
+A Flask paraphrase server that rewrites text to sound human-written. Powered by the Hugging Face Inference API (`humarin/chatgpt_paraphraser_on_T5_base`). Deployed on Vercel.
 
 ## Endpoint
 
@@ -20,7 +20,7 @@ Response:
 
 ```bash
 pip install -r requirements.txt
-echo "GROQ_API_KEY=your_key_here" > .env
+echo "HF_TOKEN=your_key_here" > .env
 python api/index.py
 ```
 
@@ -28,7 +28,7 @@ python api/index.py
 
 1. Push this repo to GitHub
 2. Import at vercel.com/new
-3. Add GROQ_API_KEY in Settings → Environment Variables
+3. Add `HF_TOKEN` in Settings → Environment Variables
 4. Deploy
 
-Get a free Groq API key at https://console.groq.com.
+Get a free Hugging Face token at https://huggingface.co/settings/tokens.
